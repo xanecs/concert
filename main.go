@@ -19,6 +19,9 @@ func main() {
 	decoder := yaml.NewDecoder(configFile)
 	var config ConcertConfig
 	err = decoder.Decode(&config)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	concert, err := NewConcert(&config)
 	if err != nil {
 		log.Fatalln(err)
