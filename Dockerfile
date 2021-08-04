@@ -16,8 +16,8 @@ RUN go build -o /concert
 
 FROM scratch
 WORKDIR /
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/group /etc/group
+COPY --from=build /etc/passwd /etc/passwd
+COPY --from=build /etc/group /etc/group
 USER appuser:appuser
 COPY --from=build /concert /concert
 ENTRYPOINT ["/concert"]
