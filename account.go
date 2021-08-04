@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"log"
 
 	"github.com/go-acme/lego/v4/registration"
 	"github.com/hashicorp/consul/api"
@@ -125,15 +126,18 @@ func (s *AccountStore) Load() (account *Account, err error) {
 func (s *AccountStore) LoadOrNew(email string) (*Account, error) {
 	account, err := s.Load()
 	if err != nil {
+		log.Println("Error loading account")
 		return nil, err
 	}
-	if account == nil {
+	if account == nil || account.GetEmail() != email {
 		account, err = NewAccount(email)
 		if err != nil {
+			log.Println("Error creating new account")
 			return nil, err
 		}
 		err = s.Save(account)
 		if err != nil {
+			log.Println("Error saving account")
 			return nil, err
 		}
 	}

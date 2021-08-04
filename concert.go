@@ -15,14 +15,14 @@ import (
 )
 
 type ConcertConfig struct {
-	ConsulAddress     string
-	AccountStoreKey   string
-	AccountEmail      string
-	CADir             string
-	DNS01ProviderName string
-	CertStoreKey      string
-	RenewalTTL        time.Duration
-	ReconcileInterval time.Duration
+	ConsulAddress     string `yaml:"consulAddress"`
+	AccountStoreKey   string `yaml:"accountStoreKey"`
+	AccountEmail      string `yaml:"accountEmail"`
+	CADir             string `yaml:"CADir"`
+	DNS01ProviderName string `yaml:"DNS01ProviderName"`
+	CertStoreKey      string `yaml:"certStoreKey"`
+	RenewalTTL        string `yaml:"renewalTTL"`
+	ReconcileInterval string `yaml:"reconcileInterval"`
 }
 
 type Concert struct {
@@ -42,6 +42,7 @@ func NewConcert(config *ConcertConfig) (*Concert, error) {
 	consulConfig.Address = config.ConsulAddress
 	consul, err := api.NewClient(consulConfig)
 	if err != nil {
+		log.Println("Error connecting to consul")
 		return nil, err
 	}
 	kv := consul.KV()
@@ -51,6 +52,7 @@ func NewConcert(config *ConcertConfig) (*Concert, error) {
 	accountStore := NewAccountStore(kv, config.AccountStoreKey)
 	account, err := accountStore.LoadOrNew(config.AccountEmail)
 	if err != nil {
+		log.Println("Error getting account")
 		return nil, err
 	}
 
@@ -61,22 +63,31 @@ func NewConcert(config *ConcertConfig) (*Concert, error) {
 
 	acmeClient, err := lego.NewClient(acmeConfig)
 	if err != nil {
+		log.Println("Error creating ACME client")
 		return nil, err
 	}
 	dnsProvider, err := dns.NewDNSChallengeProviderByName(config.DNS01ProviderName)
 	if err != nil {
+		log.Println("Error creating DNS01 provider")
 		return nil, err
 	}
 	acmeClient.Challenge.SetDNS01Provider(dnsProvider)
-
+	renewalTTL, err := time.ParseDuration(config.RenewalTTL)
+	if err != nil {
+		return nil, err
+	}
+	reconcileInterval, err := time.ParseDuration(config.ReconcileInterval)
+	if err != nil {
+		return nil, err
+	}
 	concert := &Concert{
 		accountStore:      accountStore,
 		account:           account,
 		acmeClient:        acmeClient,
 		consulAddress:     config.ConsulAddress,
 		certStore:         certStore,
-		renewalTTL:        config.RenewalTTL,
-		reconcileInterval: config.ReconcileInterval,
+		renewalTTL:        renewalTTL,
+		reconcileInterval: reconcileInterval,
 		consulCatalog:     consul.Catalog(),
 	}
 
@@ -104,6 +115,7 @@ func (c *Concert) Run() error {
 	if c.account.Registration == nil {
 		err := c.Register()
 		if err != nil {
+			log.Println("Error registering account")
 			return err
 		}
 	} else {

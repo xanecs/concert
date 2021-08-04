@@ -1,20 +1,25 @@
 package main
 
 import (
+	"flag"
 	"log"
-	"time"
+	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
+var configFlag = flag.String("config", "concert.yml", "Specify path of the config file")
+
 func main() {
-	concert, err := NewConcert(&ConcertConfig{
-		ConsulAddress:     "http://localhost:8500",
-		AccountStoreKey:   "concert/account",
-		AccountEmail:      "acme@example.com",
-		CADir:             "https://acme-staging-v02.api.letsencrypt.org/directory",
-		DNS01ProviderName: "gcloud",
-		CertStoreKey:      "certstore",
-		ReconcileInterval: 10 * time.Minute,
-	})
+	flag.Parse()
+	configFile, err := os.Open(*configFlag)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	decoder := yaml.NewDecoder(configFile)
+	var config ConcertConfig
+	err = decoder.Decode(&config)
+	concert, err := NewConcert(&config)
 	if err != nil {
 		log.Fatalln(err)
 	}

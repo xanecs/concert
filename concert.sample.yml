@@ -1,0 +1,7 @@
+ConsulAddress:     "http://localhost:8500"
+AccountStoreKey:   "concert/account"
+AccountEmail:      "acme@example.com"
+CADir:             "https://acme-staging-v02.api.letsencrypt.org/directory"
+DNS01ProviderName: "gcloud"
+CertStoreKey:      "certstore"
+ReconcileInterval: 600
